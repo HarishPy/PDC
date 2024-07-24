@@ -4,6 +4,8 @@ from tkinter import *
 from tkinter import messagebox, ttk
 import tempfile
 from datetime import datetime
+from nepali_datetime import date as nepali_date
+
 # Database setup
 def create_database():
     conn = sqlite3.connect('bills.db')
@@ -20,13 +22,38 @@ def create_database():
             time TEXT NOT NULL
         )
     ''')
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS deleted_bills (
+                bill_number INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                price REAL NOT NULL,
+                practice_time TEXT NOT NULL,
+                payment_type TEXT NOT NULL,
+                date TEXT NOT NULL,
+                time TEXT NOT NULL,
+                deleted_date TEXT NOT NULL,
+                deleted_time TEXT NOT NULL
+            )
+        ''')
     conn.commit()
     conn.close()
-
 create_database()
 
 def on_enter(event):
     save_bill()
+
+def gregorian_to_nepali(gregorian_date):
+    return nepali_date.from_datetime(gregorian_date)
+
+def reset_bill_number_if_needed():
+    current_date = datetime.now()
+    nepali_date = gregorian_to_nepali(current_date)
+    nepali_month = nepali_date.month
+    nepali_day = nepali_date.day
+
+    if nepali_month == 4 and nepali_day == 1:
+        save_last_bill_number(0)
 
 # Function to save a bill to the database
 def save_bill():
@@ -57,8 +84,52 @@ def save_bill():
             save_last_bill_number(billNumber)
             display_bill()
 
+def delete():
+    bill_number = billEntry.get().strip()
 
-# Function to display the bill in the text area
+    if not bill_number:
+        messagebox.showerror('Error', 'Please specify a Bill Number.')
+        return
+
+    if textArea.get(1.0, END).strip() == '':
+        messagebox.showerror('Error', 'Bill details are not displayed.')
+        return
+
+    result = messagebox.askyesno('Confirm', 'Are you sure you want to delete this bill?')
+    if result:
+        conn = sqlite3.connect('bills.db')
+        cursor = conn.cursor()
+
+        # Fetch the bill details
+        cursor.execute('SELECT * FROM bills WHERE bill_number = ?', (bill_number,))
+        bill_data = cursor.fetchone()
+
+        if bill_data:
+            # Insert into deleted_bills table
+            current_date = datetime.now().strftime('%Y-%m-%d')
+            current_time = datetime.now().strftime('%H:%M:%S')
+
+            cursor.execute('''
+                INSERT INTO deleted_bills (bill_number, name, category, price, practice_time, payment_type, date, time, deleted_date, deleted_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (*bill_data, current_date, current_time))
+
+            # Delete from the bills table
+            cursor.execute('DELETE FROM bills WHERE bill_number = ?', (bill_number,))
+
+            conn.commit()
+            conn.close()
+
+            messagebox.showinfo('Success', f'Bill No. {bill_number} has been deleted.')
+
+            # Clear the displayed bill
+            textArea.delete(1.0, END)
+            billEntry.delete(0, END)
+        else:
+            conn.close()
+            messagebox.showerror('Error', 'No such bill found.')
+
+
 def display_bill():
     textArea.delete(1.0, END)
     textArea.insert(END, '\t**Panchakanya Driving Center**\n\n')
@@ -140,6 +211,44 @@ def capitalize_entry(entry):
     capitalized_text = text.capitalize()
     entry.delete(0, END)
     entry.insert(0, capitalized_text)
+
+def display_transactions():
+    date_to_view = datetime.now().strftime('%Y-%m-%d')  # Get the current date
+    conn = sqlite3.connect('bills.db')
+    cursor = conn.cursor()
+
+    # Fetch records from bills table
+    cursor.execute('SELECT * FROM bills WHERE date = ?', (date_to_view,))
+    bills = cursor.fetchall()
+
+    # Fetch records from deleted_bills table
+    cursor.execute('SELECT * FROM deleted_bills WHERE date = ?', (date_to_view,))
+    deleted_bills = cursor.fetchall()
+
+    conn.close()
+
+    # Displaying records in the text area
+    textArea.delete(1.0, END)
+    textArea.insert(END, f'Transactions for {date_to_view}\n\n')
+
+    if bills:
+        textArea.insert(END, 'Bills:\n')
+        for bill in bills:
+            textArea.insert(END, f'Bill Number: {bill[0]}, Name: {bill[1]}, Category: {bill[2]}, Price: Rs. {bill[3]}, '
+                                f'Practice Time: {bill[4]}, Payment Type: {bill[5]}, Date: {bill[6]}, Time: {bill[7]}\n')
+    else:
+        textArea.insert(END, 'No bills for this date.\n')
+
+    textArea.insert(END, '\nDeleted Bills:\n')
+
+    if deleted_bills:
+        for deleted_bill in deleted_bills:
+            textArea.insert(END, f'Bill Number: {deleted_bill[0]}, Name: {deleted_bill[1]}, Category: {deleted_bill[2]}, '
+                                f'Price: Rs. {deleted_bill[3]}, Practice Time: {deleted_bill[4]}, Payment Type: {deleted_bill[5]}, '
+                                f'Date: {deleted_bill[6]}, Time: {deleted_bill[7]}, Deleted Date: {deleted_bill[8]}, Deleted Time: {deleted_bill[9]}\n')
+    else:
+        textArea.insert(END, 'No deleted bills for this date.\n')
+
 
 # Tkinter GUI setup
 root = Tk()
@@ -232,7 +341,7 @@ billmenuFrame.pack()
 billLabel = Label(billmenuFrame, text='Bill No:-', font=('Helvetica', 12, 'bold'), bg=label_bg, fg=fg_color)
 billLabel.grid(row=0, column=0, pady=10, sticky=E)
 
-billEntry = Entry(billmenuFrame, font=('Helvetica', 12), bd=7, width=18, bg=entry_bg, fg=entry_fg)
+billEntry = Entry(billmenuFrame, font=('Helvetica', 12), bd=7, width=10, bg=entry_bg, fg=entry_fg)
 billEntry.grid(row=0, column=1, padx=8, pady=10, sticky=W)
 
 searchButton = Button(billmenuFrame, text='SEARCH', font=('Helvetica', 11, 'bold'), bd=7, width=10, command=search_bill,
@@ -246,6 +355,13 @@ printButton.grid(row=0, column=3, padx=10)
 clearButton = Button(billmenuFrame, text='CLEAR', font=('Helvetica', 11, 'bold'), bd=7, width=10, command=clear,
                      bg=btn_bg, fg=btn_fg)
 clearButton.grid(row=0, column=4, padx=10)
+
+deleteButton = Button(billmenuFrame, text='DELETE', font=('Helvetica', 10, 'bold'), bd=7, width=10, command=delete, bg=btn_bg, fg=btn_fg)
+deleteButton.grid(row=0,column=5, padx=10)
+
+transactionButton = Button(billmenuFrame, text='TRANSACTION', font=('Helvetica', 10, 'bold'), bd=7, width=11, command=display_transactions, bg=btn_bg,fg=btn_fg)
+transactionButton.grid(row=1,column=3,padx=10, pady=10)
+
 
 root.bind('<Return>', on_enter)
 
