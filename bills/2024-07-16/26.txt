@@ -1,0 +1,10 @@
+		**Panchakanya Driving Center**
+
+Bill Number : 26
+Name : Krish
+Category : Car
+Price : Rs. 1000
+Time : 1 hour
+Payment Type : Cash
+Date : 16/07/2024
+

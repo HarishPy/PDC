@@ -1,0 +1,9 @@
+		**Panchakanya Driving Center**
+
+Bill Number : 29
+Name : Harish
+Category : Scooter
+Price : Rs. 800
+Time : 1 hour
+Payment Type : QR
+Date : 17/07/2024

@@ -1,0 +1,14 @@
+		***************
+
+		Panchakanya Driving Center
+
+*Bill Number : 19
+*Name : Harish
+*Category : Bike
+*Price : Rs. 500
+*Time : 1 hour
+*Time : C
+*Date : 16/07/2024
+		***************
+
+

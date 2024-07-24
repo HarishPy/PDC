@@ -1,0 +1,10 @@
+*****************
+		**Panchakanya Driving Center**
+
+*****************
+Bill Number : 8
+Name : Krish
+Category : Bike
+Price : Rs. 500
+Time : 1 hour
+Date : 15/07/2024

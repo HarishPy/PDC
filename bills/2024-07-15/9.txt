@@ -1,0 +1,7 @@
+		**Panchakanya Driving Center**
+Bill Number : 9
+Name : Krish
+Category : Scooter
+Price : Rs. 500
+Time : 1 hour
+Date : 15/07/2024

@@ -1,0 +1,15 @@
+		***************
+
+		Panchakanya Driving Center
+
+Bill Number : 23
+Name : Ayush
+Category : Car
+Price : Rs. 1000
+Practice Time : 1 hour
+Payment Type : C
+Date : 16/07/2024
+TIme: 11:44:37
+		***************
+
+

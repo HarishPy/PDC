@@ -6,7 +6,6 @@ packages = []
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
-
 shortcut_table = [
     ("DesktopShortcut",
      "DesktopFolder",

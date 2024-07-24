@@ -1,0 +1,10 @@
+		***Panchakanya Driving Center***
+
+Bill Number : 21
+Name : Harish
+Category : Car
+Price : Rs. 1000
+Time : 1 hour
+Payment Type : C
+Date : 16/07/2024
+

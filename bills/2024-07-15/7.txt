@@ -1,0 +1,13 @@
+*****************
+
+		**Panchakanya Driving Center**
+
+*****************
+
+Bill Number : 7
+Customer Name : Krish
+Category : Car
+Price : Rs. 500
+Time : 1 hour
+Date : 15/07/2024
+

@@ -1,0 +1,14 @@
+		***************
+
+		Panchakanya Driving Center
+
+Bill Number : 22
+Name : Krish
+Category : Scooter
+Price : Rs. 500
+Time : 1 hour
+Payment Type : Q
+Date : 16/07/2024
+		***************
+
+

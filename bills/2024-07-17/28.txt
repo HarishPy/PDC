@@ -1,0 +1,9 @@
+		**Panchakanya Driving Center**
+
+Bill Number : 28
+Name : Test
+Category : Car
+Price : Rs. 800
+Time : 1 hour
+Payment Type : QR
+Date : 17/07/2024

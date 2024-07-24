@@ -1,0 +1,11 @@
+		**Panchakanya Driving Center**
+
+Bill Number : 25
+Name : Harish
+Category : Scooter
+Price : Rs. 800
+Practice Time : 1 hour
+Payment Type : C
+Date : 16/07/2024
+Time: 12:09:45
+
