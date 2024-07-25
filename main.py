@@ -1,10 +1,11 @@
 import os
 import sqlite3
 from tkinter import *
-from tkinter import messagebox, ttk
+from tkinter import messagebox, ttk, filedialog
 import tempfile
 from datetime import datetime
 from nepali_datetime import date as nepali_date
+import csv
 
 # Database setup
 def create_database():
@@ -79,7 +80,7 @@ def save_bill():
             conn.commit()
             conn.close()
 
-            messagebox.showinfo('Success', f'Bill No. {billNumber} is saved.')
+            messagebox.showinfo('Success', f'Bill is saved.')
             billNumber = cursor.lastrowid
             save_last_bill_number(billNumber)
             display_bill()
@@ -212,42 +213,94 @@ def capitalize_entry(entry):
     entry.delete(0, END)
     entry.insert(0, capitalized_text)
 
+def download_transactions(data):
+    # Prompt the user to select a file location and name
+    file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
+    if file_path:
+        # Write the data to a CSV file
+        with open(file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            # Write the header
+            writer.writerow(["Bill Number", "Name", "Category", "Price", "Practice Time", "Payment Type", "Date", "Time", "Deleted Date", "Deleted Time"])
+            # Write the data
+            for row in data:
+                writer.writerow(row)
+        messagebox.showinfo("Download Complete", "Transactions have been downloaded successfully.")
+
+
 def display_transactions():
-    date_to_view = datetime.now().strftime('%Y-%m-%d')  # Get the current date
+    # Create a new Toplevel window
+    transaction_window = Toplevel(root)
+    transaction_window.title('Transactions')
+    transaction_window.geometry('900x500')
+
+    # Fetch records from the database for the current date
+    current_date = datetime.now().strftime('%Y-%m-%d')
     conn = sqlite3.connect('bills.db')
     cursor = conn.cursor()
 
     # Fetch records from bills table
-    cursor.execute('SELECT * FROM bills WHERE date = ?', (date_to_view,))
+    cursor.execute('SELECT * FROM bills WHERE date = ?', (current_date,))
     bills = cursor.fetchall()
 
     # Fetch records from deleted_bills table
-    cursor.execute('SELECT * FROM deleted_bills WHERE date = ?', (date_to_view,))
+    cursor.execute('SELECT * FROM deleted_bills WHERE deleted_date = ?', (current_date,))
     deleted_bills = cursor.fetchall()
 
     conn.close()
 
-    # Displaying records in the text area
-    textArea.delete(1.0, END)
-    textArea.insert(END, f'Transactions for {date_to_view}\n\n')
+    # Combine bills and deleted bills data
+    all_data = bills + deleted_bills
 
-    if bills:
-        textArea.insert(END, 'Bills:\n')
-        for bill in bills:
-            textArea.insert(END, f'Bill Number: {bill[0]}, Name: {bill[1]}, Category: {bill[2]}, Price: Rs. {bill[3]}, '
-                                f'Practice Time: {bill[4]}, Payment Type: {bill[5]}, Date: {bill[6]}, Time: {bill[7]}\n')
-    else:
-        textArea.insert(END, 'No bills for this date.\n')
+    # Create a frame for the download button
+    button_frame = Frame(transaction_window)
+    button_frame.pack(fill=X)
 
-    textArea.insert(END, '\nDeleted Bills:\n')
+    # Create the "Download" button
+    download_button = Button(button_frame, text="Download", command=lambda: download_transactions(all_data))
+    download_button.pack(pady=10)
 
-    if deleted_bills:
-        for deleted_bill in deleted_bills:
-            textArea.insert(END, f'Bill Number: {deleted_bill[0]}, Name: {deleted_bill[1]}, Category: {deleted_bill[2]}, '
-                                f'Price: Rs. {deleted_bill[3]}, Practice Time: {deleted_bill[4]}, Payment Type: {deleted_bill[5]}, '
-                                f'Date: {deleted_bill[6]}, Time: {deleted_bill[7]}, Deleted Date: {deleted_bill[8]}, Deleted Time: {deleted_bill[9]}\n')
-    else:
-        textArea.insert(END, 'No deleted bills for this date.\n')
+    # Define columns
+    columns = (
+    "Bill Number", "Name", "Category", "Price", "Practice Time", "Payment Type", "Date", "Time", "Deleted Date",
+    "Deleted Time")
+
+    # Create Treeview widget within a frame
+    tree_frame = Frame(transaction_window)
+    tree_frame.pack(fill=BOTH, expand=True)
+
+    tree = ttk.Treeview(tree_frame, columns=columns, show='headings')
+    tree.heading("Bill Number", text="Bill Number")
+    tree.heading("Name", text="Name")
+    tree.heading("Category", text="Category")
+    tree.heading("Price", text="Price")
+    tree.heading("Practice Time", text="Practice Time")
+    tree.heading("Payment Type", text="Payment Type")
+    tree.heading("Date", text="Date")
+    tree.heading("Time", text="Time")
+    tree.heading("Deleted Date", text="Deleted Date")
+    tree.heading("Deleted Time", text="Deleted Time")
+
+    # Set column widths
+    for col in columns:
+        tree.column(col, width=100, anchor=CENTER)
+
+    # Insert bills into the Treeview
+    for bill in bills:
+        tree.insert("", "end", values=(bill[0], bill[1], bill[2], bill[3], bill[4], bill[5], bill[6], bill[7], '', ''))
+
+    # Insert deleted bills into the Treeview
+    for deleted_bill in deleted_bills:
+        tree.insert("", "end", values=(deleted_bill[0], deleted_bill[1], deleted_bill[2], deleted_bill[3],
+                                       deleted_bill[4], deleted_bill[5], deleted_bill[6], deleted_bill[7],
+                                       deleted_bill[8], deleted_bill[9]))
+
+    # Add a scrollbar to the Treeview
+    scrollbar = Scrollbar(tree_frame, orient=VERTICAL, command=tree.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+    tree.configure(yscrollcommand=scrollbar.set)
+
+    tree.pack(fill=BOTH, expand=True)
 
 
 # Tkinter GUI setup
